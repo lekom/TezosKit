@@ -13,8 +13,6 @@ import Sodium
 ///            object is deallocated. For more information, see Apple's guidelines on password handling:
 ///            https://developer.apple.com/library/archive/documentation/Security/Conceptual/SecureCodingGuide/SecurityDevelopmentChecklists/SecurityDevelopmentChecklists.html#//apple_ref/doc/uid/TP40002415-CH1-SW6
 ///
-/// - Note: This class *cannot* instantiate Tezos fundraiser style wallets (wallets which contain a mnemonic, email and a password). If you require
-///         this functionality please file an issue.
 public struct Wallet {
   /// Keys for the wallet.
   public let publicKey: PublicKeyProtocol
@@ -57,6 +55,18 @@ public struct Wallet {
 
     let address = publicKey.publicKeyHash
     self.init(address: address, publicKey: publicKey, secretKey: secretKey, mnemonic: mnemonic)
+  }
+
+  /// Create a new fundraiser-style wallet with the given mnemonic and encrypted with an email and password
+  ///
+  /// - Parameters:
+  ///   - email: Email address associated with the wallet, for example: `leko@test.com`
+  ///   - password: The password associated with the email address
+  ///   - mnemonic: A space delimited string of english mnemonic words from the BIP39
+  public init?(email: String, password: String, mnemonic: String, signingCurve: EllipticalCurve = .ed25519) {
+    // ref: https://github.com/murbard/pytezos/blob/a228a67fbc94b11dd7dbc7ff0df9e996d0ff5f01/pytezos/crypto.py#L40
+    let passphrase = String("\(email)\(password)".utf8).decomposedStringWithCompatibilityMapping
+    self.init(mnemonic: mnemonic, passphrase: passphrase, signingCurve: signingCurve)
   }
 
   /// Create a wallet with a given secret key.
